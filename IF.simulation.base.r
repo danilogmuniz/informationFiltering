@@ -11,8 +11,8 @@ euclid = function(m1, m2=m1)
 }
 #===============================================================
 #Function that takes samples from a vector of probabilities
-#Given a vector of length n, it samples values from 1 to n, the 
-#probability of value i (i <=n )being sampled is n[i].
+#Given a vector prob of length y, it samples values from 1 to y, the 
+#probability of value i (i <=y ) being sampled is prob[i].
 sampleProb = function(prob, n=1, replace=FALSE)
 {
   prob[is.na(prob)] = 0
@@ -27,20 +27,18 @@ sampleProb = function(prob, n=1, replace=FALSE)
 #Function that runs a simulation of a mating system with information
 #filtering during mate choice.
 #It simulates one mating season of a population with 1:1 sex ratio 
-#It returns to the user a list containing three data.frames, if a 
-#filename is given, all data is also registered in csv files, one 
-#for males, one for females and one for copulations (the groups file).
-
+#The function returns a list containing three data.frames, if a 
+#filename is given, all data is also registered in three csv files.
 simScramble = function(N=100, w = 1, zmean=4, zsd=1, radius=0.10, 
                        B=2, filename=NA, append=TRUE, seed=NA,
                        choice=1, zmin=1, zmax=7)
 {  
 
-  #if a random seed is given, it must be used
+  #if a random seed is given, it is used
   if(!is.na(seed))
     set.seed(seed)  
   
-  #a ttick to facilitate indexing
+  #a trick to facilitate indexing
   xy = c("x","y")
   
   #creating the data.frames for males and females
