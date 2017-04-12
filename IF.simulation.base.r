@@ -31,9 +31,9 @@ sampleProb = function(prob, n=1, replace=FALSE)
 #filename is given, all data is also registered in three csv files.
 simScramble = function(N=100, w = 1, zmean=4, zsd=1, radius=0.10, 
                        B=2, filename=NA, append=TRUE, seed=NA,
-                       choice=1, zmin=1, zmax=7)
+                       choice=1, zmin=1, zmax=Inf, autocorr = FALSE)
 {  
-
+  
   #if a random seed is given, it is used
   if(!is.na(seed))
     set.seed(seed)  
@@ -52,7 +52,19 @@ simScramble = function(N=100, w = 1, zmean=4, zsd=1, radius=0.10,
   #creating data.frame for males
   zmean = as.numeric(zmean);zsd = as.numeric(zsd);
   zmin = as.numeric(zmin);zmax = as.numeric(zmax);
-  males$trait=rtruncnorm(n = N, a = zmin, b = zmax, mean=zmean, sd=zsd)  
+  
+  #if there is spatial autocorrelation of traits
+  if (autocorr)
+  {
+    MdistOrigin = euclid(cbind(males$x,males$y), matrix(c(0,0), nrow = 1, ncol=2))
+    MmeanZ = (MdistOrigin/(sqrt(2)*w)*zmean)+1
+    males$trait = rtruncnorm(N, a=MmeanZ/4, b=zmax, mean = MmeanZ, sd=zsd)
+  }
+  else
+  {
+    males$trait=rtruncnorm(n = N, a = zmin, b = zmax, mean=zmean, sd=zsd) 
+  }
+  
   
   if(choice==1)#directional choice
   {
@@ -64,7 +76,18 @@ simScramble = function(N=100, w = 1, zmean=4, zsd=1, radius=0.10,
   else #assortative choice
   {
     #then females also have a trait value(from the same distribution) 
-    females$trait=rtruncnorm(n = N, a = zmin, b = zmax, mean=zmean, sd=zsd)
+    
+    if(autocorr)
+    {
+      FdistOrigin = euclid(cbind(females$x,females$y), matrix(c(0,0), nrow = 1, ncol=2))
+      FmeanZ = (FdistOrigin/(sqrt(2)*w)*zmean)+1
+      females$trait=rtruncnorm(n = N, a = FmeanZ/4, b = zmax, mean=FmeanZ, sd=zsd)
+    }
+    else
+    {
+      females$trait=rtruncnorm(n = N, a = zmin, b = zmax, mean=zmean, sd=zsd)
+    }
+    
     
     #calculates all pairwise differences
     difs = outer(females$trait, males$trait, "-")
@@ -95,14 +118,13 @@ simScramble = function(N=100, w = 1, zmean=4, zsd=1, radius=0.10,
   #choosing the males
   chosenMales = apply(cmatrix, 1, sampleProb, replace=FALSE)
   
+  #data.frame that registers the copulations
   groups = data.frame(wid=seed, female = females$id, male = chosenMales)
-  
-  groups$z = zbase[cbind(groups$female,groups$male)]
   
   #adding mating success to the males
   males$ms=0  
   tms = tabulate(chosenMales, nbins = N)#table of mating success
-  
+  males$ms = tms
   
   #If there is a filename, files must be written
   #Columns are separated by ";" and "," is used as decimal separator
